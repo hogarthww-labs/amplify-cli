@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk'); //eslint-disable-line
 const querystring = require('querystring');
+const { getNotificationChannel } = require('./sns');
 const { isVideo } = require('./utils');
 
 exports.handler = async event => {
@@ -39,63 +40,7 @@ exports.handler = async event => {
     }
 
     if (isVid) {      
-      // TODO: extract to function
-      const SNSTopicArn = evRecord.SNSTopicArn
-      const RoleArn = evRecord.RoleArn
-      let NotificationChannel
-
-      if (SNSTopicArn) {
-        NotificationChannel = {
-          SNSTopicArn
-        }
-      } else {
-        // https://dev.to/singhs020/getting-started-with-aws-sns-44b0
-        // https://gist.github.com/tmarshall/6149ed2475f964cda3f5
-        // https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/sns-examples-managing-topics.html
-
-        // List topics (maybe already present?)
-        // Create promise and SNS service object
-        var listTopicsPromise = new AWS.SNS({apiVersion: '2010-03-31'}).listTopics({}).promise();
-
-        // Handle promise's fulfilled/rejected states
-        listTopicsPromise.then(
-          function(data) {
-            // A list of topic ARNs.
-            console.log(data.Topics);
-
-            // use get topic attributes to get display name of each
-            // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/SNS.html#getTopicAttributes-property
-
-          }).catch(
-            function(err) {
-            console.error(err, err.stack);
-          });
-
-        // TODO: extract into function
-        let TopicName = asset.evRecord.TopicName || 'AI_Tags'
-
-        // Create promise and SNS service object
-        var createTopicPromise = new AWS.SNS({apiVersion: '2010-03-31'}).createTopic({Name: TopicName}).promise();
-
-        // Handle promise's fulfilled/rejected states
-        createTopicPromise.then(
-          function(data) {
-            // Fetch newly created Topic ARN
-            console.log("Topic ARN is " + data.TopicArn);
-
-            NotificationChannel = {
-              SNSTopicArn
-            }
-    
-          }).catch(
-            function(err) {
-            console.error(err, err.stack);
-          });        
-      }
-
-      if (RoleArn) {
-        NotificationChannel.RoleArn = RoleArn
-      }   
+      NotificationChannel = await getNotificationChannel(evRecord)
       if (NotificationChannel) {
         asset.evRecord.NotificationChannel = NotificationChannel  
       }        

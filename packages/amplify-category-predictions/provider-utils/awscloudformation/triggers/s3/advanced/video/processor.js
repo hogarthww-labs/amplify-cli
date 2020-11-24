@@ -1,5 +1,4 @@
 const AWS = require('aws-sdk'); //eslint-disable-line
-const { createAddToObj } = require('../utils');
 
 // You can also specify an optional input parameter, JobTag, that allows you to 
 // identify the job in the completion status that's published to the Amazon SNS topic.
