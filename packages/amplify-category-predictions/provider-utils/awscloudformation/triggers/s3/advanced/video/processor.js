@@ -1,17 +1,15 @@
 const AWS = require('aws-sdk'); //eslint-disable-line
+const { createAddToObj } = require('../utils');
 
 // You can also specify an optional input parameter, JobTag, that allows you to 
 // identify the job in the completion status that's published to the Amazon SNS topic.
 function createParams({
-  faceMatchThreshold,
-  clientRequestToken, 
-  jobTag, 
-  minConfidence, 
-  notificationChannel, 
+  evRecord,
   bucketName, 
   decodeKey 
 }) {
    const params = {
+    ...evRecord || {},
     CollectionId: process.env.collectionId,
     Video: {
       S3Object: {
@@ -19,25 +17,10 @@ function createParams({
         Name: decodeKey,
       },
     },
-  }; 
-  if (faceMatchThreshold) {
-    params.FaceMatchThreshold = faceMatchThreshold
-  }
-  if (clientRequestToken) {
-    params.ClientRequestToken = clientRequestToken
-  }    
-  if (jobTag) {
-    params.JobTag = jobTag
-  }  
-  if (minConfidence) {
-    params.MinConfidence = minConfidence
-  }  
-  if (notificationChannel) {
-    params.NotificationChannel = notificationChannel
-  }  
+  };
   return params
 }
-export function processVideoAsset(asset) {
+function processVideoAsset(asset) {
   const { functionName } = asset
   const params1 = createParams(asset)
   const rekognition = new AWS.Rekognition();
@@ -46,15 +29,24 @@ export function processVideoAsset(asset) {
   processResult(result, functionName)  
 } 
 
+function hasJobId(result) { return result.JobId }
+
 const processResultMap = {
-  startLabelDetection: function (result) { return result.JobId },
+  startLabelDetection: hasJobId,
+  startFaceSearch: hasJobId,
 }
 
-export function processResult(result, functionName) {
+function processResult(result, functionName) {
   if (processResultMap[functionName](result)) {
-    console.log('Indexed video successfully');
+    console.log('Video processed successfully');
   } else {
     console.log('Request Failed');
     console.log(result);
   }
+}
+
+module.exports = {
+  processResult,
+  processVideoAsset,
+  createParams
 }

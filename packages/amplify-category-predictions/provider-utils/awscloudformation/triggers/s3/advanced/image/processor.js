@@ -1,8 +1,9 @@
 const AWS = require('aws-sdk'); //eslint-disable-line
 
 // https://docs.aws.amazon.com/rekognition/latest/dg/API_DetectLabels.html
-function createParams({externalAssetId, bucketName, decodeKey }) {
+function createParams({ evRecord, externalAssetId, bucketName, decodeKey }) {
   return {
+    ...evRecord || {},
     CollectionId: process.env.collectionId,
     ExternalImageId: externalAssetId,
     Image: {
@@ -14,7 +15,7 @@ function createParams({externalAssetId, bucketName, decodeKey }) {
   };  
 }
 
-export function processImageAsset(asset) {
+function processImageAsset(asset) {
   const { functionName, externalAssetId, bucketName, decodeKey } = asset
   const params1 = createParams({
     externalAssetId, bucketName, decodeKey
@@ -29,11 +30,17 @@ const processResultMap = {
   indexFaces: function (result) { return result.FaceRecords }
 }
 
-export function processResult(result, functionName) {
+function processResult(result, functionName) {
   if (processResultMap[functionName](result)) {
     console.log('Indexed image successfully');
   } else {
     console.log('Request Failed');
     console.log(result);
   }
+}
+
+module.exports = {
+  processResult,
+  processImageAsset,
+  createParams
 }

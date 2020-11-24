@@ -1,19 +1,6 @@
+const AWS = require('aws-sdk'); //eslint-disable-line
 const querystring = require('querystring');
-
-const videoExtensions = [
-  'mp4',
-  '3gp',
-  'ogg',
-  'wmv',
-  'webm',
-  'flv',
-  'avi'
-]
-
-function isVideo(extension) {
-  if (videoExtensions.includes(extension)) return true
-  return false
-}
+const { isVideo } = require('./utils');
 
 exports.handler = async event => {
   AWS.config.update({
@@ -39,6 +26,7 @@ exports.handler = async event => {
     }
 
     let asset = {
+      evRecord,
       'type': isVid ? 'video' : 'image',
       isVideo: isVid,
       isImage: !isVid,
@@ -52,47 +40,65 @@ exports.handler = async event => {
 
     if (isVid) {      
       // TODO: extract to function
-      const jobTag = evRecord.jobTag
       const SNSTopicArn = evRecord.SNSTopicArn
       const RoleArn = evRecord.RoleArn
-      let notificationChannel
+      let NotificationChannel
+
       if (SNSTopicArn) {
-        notificationChannel ={
+        NotificationChannel = {
           SNSTopicArn
         }
-        if (RoleArn) {
-          notificationChannel.RoleArn = RoleArn
-        }             
+      } else {
+        // https://dev.to/singhs020/getting-started-with-aws-sns-44b0
+        // https://gist.github.com/tmarshall/6149ed2475f964cda3f5
+        // https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/sns-examples-managing-topics.html
+
+        // List topics (maybe already present?)
+        // Create promise and SNS service object
+        var listTopicsPromise = new AWS.SNS({apiVersion: '2010-03-31'}).listTopics({}).promise();
+
+        // Handle promise's fulfilled/rejected states
+        listTopicsPromise.then(
+          function(data) {
+            // A list of topic ARNs.
+            console.log(data.Topics);
+
+            // use get topic attributes to get display name of each
+            // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/SNS.html#getTopicAttributes-property
+
+          }).catch(
+            function(err) {
+            console.error(err, err.stack);
+          });
+
+        // TODO: extract into function
+        let TopicName = asset.evRecord.TopicName || 'AI_Tags'
+
+        // Create promise and SNS service object
+        var createTopicPromise = new AWS.SNS({apiVersion: '2010-03-31'}).createTopic({Name: TopicName}).promise();
+
+        // Handle promise's fulfilled/rejected states
+        createTopicPromise.then(
+          function(data) {
+            // Fetch newly created Topic ARN
+            console.log("Topic ARN is " + data.TopicArn);
+
+            NotificationChannel = {
+              SNSTopicArn
+            }
+    
+          }).catch(
+            function(err) {
+            console.error(err, err.stack);
+          });        
       }
 
-      asset = {
-        ...asset,
-        jobTag,
-        minConfidence,
-        clientRequestToken,
-      }
-      if (notificationChannel) {
-        asset.notificationChannel = notificationChannel
-      }
-      if (functionName === 'startFaceSearch') {
-        const faceMatchThreshold = evRecord.faceMatchThreshold        
-        asset = {
-          ...asset,
-          faceMatchThreshold,
-        }
-      }
-      if (functionName === 'startLabelDetection') {
-        const minConfidence = evRecord.minConfidence
-        const clientRequestToken = evRecord.clientRequestToken  
-
-        asset = {
-          ...asset,
-          minConfidence,
-          clientRequestToken,
-        }  
-      }
-
-
+      if (RoleArn) {
+        NotificationChannel.RoleArn = RoleArn
+      }   
+      if (NotificationChannel) {
+        asset.evRecord.NotificationChannel = NotificationChannel  
+      }        
     }
 
     if (assetName === '') {
@@ -107,7 +113,9 @@ exports.handler = async event => {
       const processorFn = asset.isVideo ? processVideoAsset : processImageAsset
       processorFn(asset)
     } else {
-      cleanupAsset(asset)
+      if (asset.isImage) {
+        cleanupAsset(asset)
+      }      
     }
   }
 };

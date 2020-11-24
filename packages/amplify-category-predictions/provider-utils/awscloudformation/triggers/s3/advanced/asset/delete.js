@@ -1,4 +1,4 @@
-export async function deleteAssetIndex(rekognition, result, externalAssetID) {
+async function deleteAssetIndex(rekognition, result, externalAssetID) {
   const len = result.Faces.length;
   let resultDeleted = false;
   for (let i = 0; i < len; i++) {
@@ -47,4 +47,8 @@ export function cleanupAsset(asset) {
   if (!resultDeleted) {
     console.log(`Unable to find the index to delete for ${decodeKey}`);
   }  
+}
+
+module.exports = {
+  deleteAssetIndex 
 }
