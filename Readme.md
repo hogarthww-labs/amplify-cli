@@ -24,12 +24,23 @@
 
 The AWS Amplify CLI is a toolchain which includes a robust feature set for simplifying mobile and web application development. The CLI uses AWS CloudFormation and nested stacks to allow you to add or modify configurations locally before you push them for execution in your account.
 
-- [Install the CLI](#install-the-cli)
-- [Commands Summary](#commands-summary)
-- [Tutorials](#tutorials)
-- [Contributing](#contributing)
-- [Start building your app](https://aws-amplify.github.io/docs)
-- [Changelog](https://github.com/aws-amplify/amplify-cli/blob/master/packages/amplify-cli/CHANGELOG.md)
+- [AWS Amplify CLI](#aws-amplify-cli)
+  - [Changes in this version](#changes-in-this-version)
+  - [Install the CLI](#install-the-cli)
+  - [Commands Summary](#commands-summary)
+    - [Category specific commands:](#category-specific-commands)
+  - [Tutorials](#tutorials)
+  - [Developing](#developing)
+  - [Contributing](#contributing)
+
+## Changes in this version
+
+This version of the cli adds experimental support for video recognition
+
+- `startLabelDetection`
+- `startFaceSearch`
+
+Image recognition is still supported as before
 
 ## Install the CLI
 
