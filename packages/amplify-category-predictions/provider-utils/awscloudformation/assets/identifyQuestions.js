@@ -213,7 +213,7 @@ const adminTask = [
   {
     type: 'list',
     name: 'folderPolicies',
-    message: 'Who can have access to these images? ',
+    message: 'Who can have access to these assets? ',
     choices: [
       {
         name: 'Admins (via the CLI)',
@@ -231,7 +231,7 @@ const adminTask = [
 
 const s3bucket = {
   key: 'bucketName',
-  question: 'The CLI would be provisioning an S3 bucket to store these images please provide bucket name:',
+  question: 'The CLI would be provisioning an S3 bucket to store these assets please provide bucket name:',
   validation: {
     operator: 'regex',
     value: '^[a-z0-9-]+$',
