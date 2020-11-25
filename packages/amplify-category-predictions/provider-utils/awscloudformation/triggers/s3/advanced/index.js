@@ -45,7 +45,7 @@ exports.handler = async event => {
         asset.evRecord.NotificationChannel = NotificationChannel  
       }        
     }
-
+  
     if (assetName === '') {
       console.log('creation of folder');
       return;
